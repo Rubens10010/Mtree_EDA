@@ -7,6 +7,7 @@ Node::Node()
 {
     initialized = false;
 	current = 0;
+	leaf = false;
 }
 
 Node::Node(unsigned int M)
@@ -14,6 +15,7 @@ Node::Node(unsigned int M)
 	objetos.resize(M);
 	current = 0;
 	initialized = true;
+	leaf = false;
 }
 
 Node::~Node()
@@ -43,4 +45,19 @@ fContainer Node::getFeaturesAt(int i)
 _object* Node::getObjectAt(int i)
 {
 	return objetos[i];
+}
+
+double Node::getPDistanceTo(int i)
+{
+	return distances[i];
+}
+
+void Node::setDistanceOf(int i, double d)
+{
+	distances[i] = d;
+}
+
+bool Node::isLeaf()
+{
+	return leaf;
 }

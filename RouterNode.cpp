@@ -36,16 +36,6 @@ double RouterNode::getRadiusAt(int i)
 	return radius[i];
 }
 
-double RouterNode::getPDistanceTo(int i)
-{
-	return distances[i];
-}
-
-void RouterNode::setPDistanceOf(int i, double d)
-{
-	distances[i] = d;
-}
-
 void RouterNode::setRadiusOf(int i, double r)
 {
 	radius[i] = r;

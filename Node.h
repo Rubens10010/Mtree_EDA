@@ -16,16 +16,19 @@ class Node
         virtual void add(_object* n, double d = 0, double r = 0) = 0;
         void setNodeSize(unsigned int m);
         bool isFull();
+		bool isLeaf();
         fContainer getFeaturesAt(int i);
-		_object* getObjectAt(int i);		// Return the object 
-		virtual double getPDistanceTo(int i) = 0;
+		_object* getObjectAt(int i);		// Return the object : routerObj
+		virtual double getPDistanceTo(int i);
 
 		static unsigned int minCapacity;
 		static unsigned int maxCapacity;
 
 	protected:
-	    virtual void setDistanceOf(int i,double d) = 0;
+	    virtual void setDistanceOf(int i,double d);
+		bool leaf;
         bool initialized;
 		int current;
-        std::vector<_object*> objetos;
+        std::vector<_object*> objetos;	// routerNodes almacenan RouterObj , LeafNodes almacenan Entries
+		values distances;
 };

@@ -20,11 +20,9 @@ public:
 	void checkDistance();
 	Node* getPointerTo(int i);
 	double getRadiusAt(int i);
-	double getPDistanceTo(int i);
 
 private:
 
-	void setPDistanceOf(int i, double d);
 	void setRadiusOf(int i, double r);
 
 	int current;
