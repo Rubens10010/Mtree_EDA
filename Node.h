@@ -20,6 +20,8 @@ class Node
         fContainer getFeaturesAt(int i);
 		_object* getObjectAt(int i);		// Return the object : routerObj
 		virtual double getPDistanceTo(int i);
+		std::vector<_object*>::iterator getBegin();
+		std::vector<_object*>::iterator getEnd();
 
 		static unsigned int minCapacity;
 		static unsigned int maxCapacity;

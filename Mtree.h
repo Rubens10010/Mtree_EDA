@@ -23,7 +23,7 @@ public:
 
 protected:
 
-	void insert(Node *&N, _object &entry, double dp);
+	void insert(Node *&N, int i, _object &entry, double dp);
 	void split(Node *&N, _object &On);
 	void promote(setObjetos &obj, _object &Op1, _object &Op2);
 	void partition(setObjetos &obj, _object &Op1, _object &Op2, setObjetos &N1, setObjetos &N2);

@@ -61,3 +61,12 @@ bool Node::isLeaf()
 {
 	return leaf;
 }
+std::vector<_object*>::iterator Node::getBegin()
+{
+	return objetos.begin();
+}
+
+std::vector<_object*>::iterator Node::getEnd()
+{
+	return objetos.end();
+}
