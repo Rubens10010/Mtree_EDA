@@ -1,5 +1,5 @@
-#ifndef M_NODE_H
-#define M_NODE_H
+#ifndef M_node_H
+#define M_node_H
 #include "IndexObj.h"
 
 typedef std::map<Data, IndexObj*> childrenMap;  // used to store data and child nodes of this.
@@ -42,7 +42,7 @@ class M_node : IndexObj
                 Partition p2;
                 promotedObjects promoted = mtree->split_function(p1,p2,distance_function_cached); // get Promoted Nodes from split policy
 
-                M_Node* newNodes[2];
+                M_node* newNodes[2];
                 for(int i = 0; i < 2; ++i)
                 {
                     Data& promotedObject = (i == 0)? promoted.first : promoted.second;
@@ -68,8 +68,8 @@ class M_node : IndexObj
         virtual size_t getMinCapacity(const Mtree* mtree) const = 0;
     protected:
 
-        M_Node(const Data& data):IndexObj(data){}
-        M_Node():IndexObj(*(Data*)(0)){std::cout << "This is never called";}
+        M_node(const Data& data):IndexObj(data){}
+        M_node():IndexObj(*(Data*)(0)){std::cout << "This is never called";}
         // delete copy and move semantics
 
         virtual void addDataConfirm(const Data& data, double distance, const Mtree* mtree) = 0;
@@ -95,4 +95,4 @@ class M_node : IndexObj
         childrenMap children;
 };
 
-#endif // M_NODE_H
+#endif // M_node_H

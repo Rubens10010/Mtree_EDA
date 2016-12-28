@@ -19,6 +19,9 @@ template <
 class IndexObj
 {
     public:
+			  using std::pair<Data, Data> promotedObjects;
+				using std::set<Data> Partition;
+
         IndexObj();
         virtual ~IndexObj();
 
@@ -33,9 +36,15 @@ class IndexObj
         double radius;  // Covering radius
         double distanceToParent;
 
+				virtual size_t _check(const mtree* mtree) const{
+				// checkRadius
+						checkDistanceToP();
+				}
+
     protected:
         IndexObj(const Data& data) : data(data), radius(0), distanceToParent(-1){}
-    private:
+				virtual void checkDistanceToP() const;
+		private:
         // Functions to check if M tree semantics are always true
 };
 

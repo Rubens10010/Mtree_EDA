@@ -36,7 +36,7 @@ class RootLeafNode : public RootNodeT<Data,DistanceFunction,SplitFunction>, publ
           if(this->children.size() < 1)
             std::std::cerr << "Node in underflow" << '\n';
       }
-}
+};
 
 template <
 	typename Data,
@@ -60,7 +60,7 @@ class RootNode : public RootNodeT<Data,DistanceFunction,SplitFunction>, public N
         if(this->children.size() < 2)
           std::std::cerr << "Error root node in underflow" << '\n';
       }
-}
+};
 
 template <
 	typename Data,
@@ -74,7 +74,7 @@ class InternalNode: public NotRootNodeT<Data,DistanceFunction,SplitFunction>,pub
 {
   public:
     InternalNode(const Data& data):M_node(data){}
-}
+};
 
 template <
 	typename Data,
@@ -88,7 +88,7 @@ class LeafNode: public NotRootNodeT<Data,DistanceFunction,SplitFunction>,public 
 {
   public:
     LeafNode(const Data& data):M_node(data){}
-}
+};
 
 template <
 	typename Data,
@@ -102,6 +102,6 @@ class Entry : public IndexObj<Data,DistanceFunction,SplitFunction>
 {
   public:
       Entry(const Data& data) : IndexObj(data) {}
-}
+};
 
 #endif CONCRETENODES_H
