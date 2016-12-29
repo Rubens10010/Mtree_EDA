@@ -5,49 +5,64 @@
 
 template <
 	typename Data,
-	typename DistanceFunction = ::mt::functions::euclidean_distance,
-	typename SplitFunction = ::mt::functions::split_function<
-	        ::mt::functions::random_promotion,
-	        ::mt::functions::balanced_partition
+	typename DistanceFunction = functions::euclidean_distance<Data>,
+	typename SplitFunction = functions::split_function<
+	        functions::random_promotion,
+	        functions::balanced_partition
 		>
 >
 class RootNodeT : public virtual M_node<Data, DistanceFunction, SplitFunction>
 {
+public:
     void checkDistanceToP() const {
         if(this->distanceToParent != -1)
           std::cerr << "Error in root node";
     }
-}
+};
 
+template <
+	typename Data,
+	typename DistanceFunction = functions::euclidean_distance<Data>,
+	typename SplitFunction = functions::split_function<
+	functions::random_promotion,
+	functions::balanced_partition>>
 class NotRootNodeT: public virtual M_node<Data, DistanceFunction, SplitFunction>
 {
-    size_t getMinCapacity(const Mtree* mtree) const
+public:
+    size_t getMinCapacity(const Mtree<Data, DistanceFunction, SplitFunction>* mtree) const
     {
         return mtree->minNodeCapacity;
     }
 
-    void checkMinCapacity(const Mtree* mtree) const
+    void checkMinCapacity(const Mtree<Data, DistanceFunction, SplitFunction>* mtree) const
     {
         if( this->children.size() < mtree->minNodeCapacity)
         {
             std::cerr << "Error Underflow root node" << std::endl;
         }
     }
-}
+};
 
+template <
+	typename Data,
+	typename DistanceFunction = functions::euclidean_distance<Data>,
+	typename SplitFunction = functions::split_function<
+	functions::random_promotion,
+	functions::balanced_partition>>
 class LeafNodeT : public virtual M_node<Data, DistanceFunction, SplitFunction>
 {
-    void addDataConfirm(const Data& data, double distance, const Mtree* mtree)
+public:
+    void addDataConfirm(const Data& data, double distance, const Mtree<Data, DistanceFunction, SplitFunction>* mtree) override
     {
         // Leaf nodes store entries
-        Entry* entry = new Entry(data);
+        Entry<Data, DistanceFunction, SplitFunction>* entry = new Entry<Data, DistanceFunction, SplitFunction>(data);
         // this data shouldn't already be in this node
-        this->childre[data] = entry;
+        this->children[data] = entry;
         // assert correct insertion into map
         updateMetrics(entry, distance); // update M-tree semantics
     }
 
-    void addChild(IndexObj* child,double distance, const mtree* mtree)
+    void addChild(IndexObj* child, double distance, const Mtree<Data, DistanceFunction, SplitFunction>* mtree) override
     {
         // new child shouldn't be into children map
         this->children[child->data] = child;
@@ -55,31 +70,36 @@ class LeafNodeT : public virtual M_node<Data, DistanceFunction, SplitFunction>
         updateMetrics(child, distance);
     }
 
-    M_node* splitNodeNew(const Data& data)
+    M_node* SplitNodeNew(const Data& data) const
     {
-        return new LeafNode(data);  // replace when overflow
+        return new LeafNode<Data, DistanceFunction, SplitFunction>(data);  // replace when overflow
     }
 
-    void removeDataConfirm(const Data& data, double distance, const Mtree* mtree) throw (DataNotFound)
+    void removeDataConfirm(const Data& data, double distance, const Mtree<Data, DistanceFunction, SplitFunction>* mtree) throw(DataNotFound)
     {
         if(this->children.erase(data) == 0)
-        {
-            throw DataNotFound{data};
+			std::cerr << "Error while removing" << std::endl;
+        throw DataNotFound{data};
     }
 
     /* Verify correct assignation of leaf nodes*/
     void checkChildClass(IndexObj* child) const
     {
         if(dynamic_cast<Entry*>(child) == NULL)
-      }
-            std::cerr << "Error while casting leaf node" << std::endl;
+           std::cerr << "Error while casting leaf node" << std::endl;
     }
-}
+};
 
-class NotLeafNodeT : public virtual Node
+template <
+	typename Data,
+	typename DistanceFunction = functions::euclidean_distance<Data>,
+	typename SplitFunction = functions::split_function<
+	functions::random_promotion,
+	functions::balanced_partition>>
+class NotLeafNodeT : public virtual M_node<Data, DistanceFunction, SplitFunction>
 {
     /* Override base class virtual function*/
-    void addDataConfirm(const Data &data, double distance, const Mtree* mtree)
+    void addDataConfirm(const Data &data, double distance, const Mtree<Data, DistanceFunction, SplitFunction>* mtree)
     {
         // if there are any child with radius containing data point
         EligebleChild minRadiusIncrease = {nullptr, -1.0, std::numeric_limits<double>::infinity()};
@@ -87,12 +107,12 @@ class NotLeafNodeT : public virtual Node
         EligebleChild nearestDistance = {nullptr, -1.0, std::numeric_limits<double>::infinity()};
 
         // iterate through all children
-        for(auto M_node::childrenMap::iterator i = this->children.begin(); i != this->children.end(); ++i)
+        for(M_node<Data, DistanceFunction, SplitFunction>::childrenMap::iterator i = this->children.begin(); i != this->children.end(); ++i)
         {
             // cast for polymorphism
-            M_node* child = dynamic_cast<M_node*>(i->second);
+            M_node<Data, DistanceFunction, SplitFunction>* child = dynamic_cast<M_node<Data, DistanceFunction, SplitFunction>*>(i->second);
             if(child == NULL)
-              std::std::cerr << "Error while casting children nodes" << '\n';
+              std::cerr << "Error while casting children nodes" << '\n';
             double distance = mtree->distance_function(child->data, data);  // distance of new data from child of this node
 
             // not in radius range
@@ -132,7 +152,7 @@ class NotLeafNodeT : public virtual Node
 
             // NUM_nodeS normally 2
             // Create new Nodes and add children of node replace
-            for(int i = 0; i < s.NUM_nodeS; ++i)
+            for(int i = 0; i < s.NUM_NODES; ++i)
             {
                 M_node* newChild = s.newNodes[i];
                 double distance = mtree->distance_function(this->data, newChild->data); // update distance to parent
@@ -142,11 +162,11 @@ class NotLeafNodeT : public virtual Node
         }
     }
 
-    void addChild(IndexObj* newChild, double distance, const Mtree* mtree)
+    void addChild(IndexObj* newChild, double distance, const Mtree<Data, DistanceFunction, SplitFunction>* mtree)
     {
-        M_node* nChild = dynamic_cast<M_node*>(newChild);
+        M_node<Data, DistanceFunction, SplitFunction>* nChild = dynamic_cast<M_node<Data, DistanceFunction, SplitFunction>*>(newChild);
         // assert null nChild
-        std::std::vector<childTemp> nChildren;
+        std::vector<childTemp> nChildren;
         nChildren.push_back(childTemp{nChild,distance});
 
         // method to verify if it's not already a child node
@@ -160,7 +180,7 @@ class NotLeafNodeT : public virtual Node
             distance = cwd.distance;
 
             // find for it in children map
-            auto M_node::childrenMap::iterator i = this->children.find(nChild->data);
+            M_node<Data, DistanceFunction, SplitFunction>::childrenMap::iterator i = this->children.find(nChild->data);
             if(i == this->children.end()) // not found
             {
               this->children[nChild->data] = nChild;
@@ -169,14 +189,14 @@ class NotLeafNodeT : public virtual Node
             else
             {
               // point to existing child with same data
-              M_node* exiChild = dynamic_cast<Node*>(this->children[child->data]);
+              M_node<Data, DistanceFunction, SplitFunction>* existing= dynamic_cast<M_node<Data, DistanceFunction, SplitFunction>*>(this->children[nChild->data]);
               if(existing == nullptr || nChild->data == existing->data)
-                  std::std::cerr << " Error while casting existing child " << '\n';
+                  std::cerr << " Error while casting existing child " << '\n';
 
               // assign new children to existing node
-              for(auto M_node::childrenMap::iterator i = nChild->children.begin(); i != nChild->children.end(); ++i)
+              for(M_node<Data, DistanceFunction, SplitFunction>::childrenMap::iterator i = nChild->children.begin(); i != nChild->children.end(); ++i)
               {
-                  IndexObj* grandchild = i->second;
+                  IndexObj<Data, DistanceFunction, SplitFunction>* grandchild = i->second;
                   existing->addChild(grandchild, grandchild->distanceToParent, mtree);
               }
 
@@ -203,15 +223,18 @@ class NotLeafNodeT : public virtual Node
               }
             }
         }
-    }
+	}
 
     // Type of node to throw when split is requeried
-    M_node* splitNodeNew(const Data& data) const
+    M_node* SplitNodeNew(const Data& data) const
     {
-        return new InternalNode(data);
+        return new InternalNode<Data,DistanceFunction,SplitFunction>(data);
     }
-    void doRemoveData(const Data& data, double distance, const mtree* mtree) throw (DataNotFound);
-    Node* balanceChildren(Node* theChild, const mtree* mtree);
+
+	void removeDataConfirm(const Data& data, double distance, const Mtree<Data, DistanceFunction, SplitFunction>* mtree) throw(DataNotFound)
+	{ throw DataNotFound{}; }
+
+    M_node* balanceChildren(M_node* theChild, const Mtree<Data, DistanceFunction, SplitFunction>* mtree){}
 
     void checkChildClass(IndexObj* child) const{
       if(dynamic_cast<InternalNode*>(child) == nullptr || dynamic_cast<LeafNode*>(child) == nullptr);
@@ -221,16 +244,16 @@ class NotLeafNodeT : public virtual Node
   private:
         struct EligebleChild
         {
-            M_node* node;
+            M_node<Data, DistanceFunction, SplitFunction>* node;
             double distance;
             double m; // metric
-        }
+		};
 
         struct childTemp
         {
-            M_node* child;
+            M_node<Data, DistanceFunction, SplitFunction>* child;
             double distance;
-        }
-}
+		};
+};
 
 #endif // TRAITNODES_H
