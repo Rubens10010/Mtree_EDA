@@ -6,6 +6,9 @@
 #include <set>
 #include <utility>
 #include <vector>
+#include <numeric>
+//#include <time.h>
+//#include <random>
 
 namespace functions
 {
@@ -27,8 +30,25 @@ namespace functions
 		template <typename Data, typename DistanceFunction>
 		std::pair<Data, Data> operator()(const std::set<Data>& data_objects, DistanceFunction& distance_function) const {
 			std::vector<Data> promoted;
-			//random_sample_n(data_objects.begin(), data_objects.end(), inserter(promoted, promoted.begin()), 2);
-			assert(promoted.size() == 2);
+			std::vector<unsigned int> indices(data_objects.size());
+			std::iota(indices.begin(), indices.end(), 0);
+			std::random_shuffle(indices.begin(), indices.end());
+
+			int num1 = indices[0];
+			int num2 = indices[1];
+
+			std::set<Data>::const_iterator it(data_objects.begin());
+
+			// 'advance' the iterator 5 times
+			advance(it, num1);
+			promoted.push_back(*it);
+			it = data_objects.begin();
+			advance(it, num2);
+			promoted.push_back(*it);
+
+
+			if (promoted.size() != 2)
+				std::cerr << "Error in promoting childs" << std::endl;
 			return { promoted[0], promoted[1] };
 		}
 	};
@@ -86,6 +106,34 @@ namespace functions
 				}
 			}
 		}
+	};
+
+	struct Generalized_Hyperplane
+	{
+		template <typename Data, typename DistanceFunction>
+		void operator()(const std::pair<Data, Data>& promoted,
+			std::set<Data>& first_partition,
+			std::set<Data>& second_partition,
+			DistanceFunction& distance_function
+			) const
+		{
+			std::vector<Data> queue1(first_partition.begin(), first_partition.end());
+
+			first_partition.clear();
+			for (auto et = queue1.begin(); et != queue1.end(); et++)
+			{
+				Data& data = *et;
+				double distance1 = distance_function(data, promoted.first);
+				double distance2 = distance_function(data, promoted.second);
+
+				if (distance1 < distance2)
+					first_partition.insert(data);
+				else
+					second_partition.insert(data);
+			}
+
+		}
+
 	};
 
 	template <typename PromotionFunction, typename PartitionFunction>

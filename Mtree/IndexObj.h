@@ -69,6 +69,7 @@ class IndexObj
         IndexObj(IndexObj&&) = delete;
         IndexObj& operator=(const IndexObj&) = delete;
         IndexObj& operator=(IndexObj&&) = delete;
+		virtual ~IndexObj() { };
 
         Data data;    // data used as reference for distanceToParent
         double radius;  // Covering radius
@@ -79,6 +80,7 @@ class IndexObj
 				checkDistanceToP();
 				return 1;
 		}
+
 
     protected:
         IndexObj(const Data& data) : data(data), radius(0), distanceToParent(-1){}

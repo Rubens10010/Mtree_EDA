@@ -17,9 +17,9 @@ class M_node : public IndexObj<Data,DistanceFunction,SplitFunction>
 
         virtual ~M_node()
         {
-            for(typename childrenMap::iterator i = children.begin(); i != children.end(); ++i)
+            for(childrenMap::iterator i = children.begin(); i != children.end(); ++i)
             {
-                IndexObj* child = i->second;
+                auto child = i->second;
                 delete child;
             }
         }

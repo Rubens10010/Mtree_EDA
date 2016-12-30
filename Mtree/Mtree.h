@@ -2,6 +2,7 @@
 #define MTREE_H
 
 #include "ConcreteNodes.h"
+//#include <time.h>
 //#include "ExceptionClasses.h"
 
 template <
@@ -21,11 +22,11 @@ class Mtree
 		const SplitFunction& split_function = SplitFunction{})
     :minNodeCapacity(min_capacity),maxNodeCapacity(max_capacity),distance_function(distance_func), split_function(split_function), root(NULL)
     {
-		std::cout << max_capacity << std::endl;
       if(max_capacity == size_t(-1))
       {
           this->maxNodeCapacity = 2*min_capacity -1;
       }
+	 // time(NULL);
     }
 
     Mtree(const Mtree&) = delete;
