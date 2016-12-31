@@ -83,7 +83,7 @@ class IndexObj
 
 
     protected:
-        IndexObj(const Data& data) : data(data), radius(0), distanceToParent(-1){}
+        IndexObj(const Data& data) : data(data), radius(0), distanceToParent(0){}	// changed distanceToParent from -1 to 0
 		virtual void checkDistanceToP() const {
 			if (dynamic_cast<const RootNodeT<Data,DistanceFunction,SplitFunction>*>(this) != NULL || distanceToParent < 0)
 				std::cerr << "Error in distance to Parent" << std::endl;

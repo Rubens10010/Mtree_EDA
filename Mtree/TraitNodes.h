@@ -15,7 +15,7 @@ class RootNodeT : public virtual M_node<Data, DistanceFunction, SplitFunction>
 {
 public:
     void checkDistanceToP() const {
-        if(this->distanceToParent != -1)
+        if(this->distanceToParent != 0)
           std::cerr << "Error in root node";
     }
 };

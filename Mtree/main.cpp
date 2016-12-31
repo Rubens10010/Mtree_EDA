@@ -15,6 +15,14 @@ PromotionFunction nonRandomPromotion =
 	return { dataObjects.front(), dataObjects.back() };
 };
 
+void print_Data(Data& d)
+{
+	for (auto i : d)
+	{
+		std::cout << i << std::endl;
+	}
+}
+
 int main()
 {
     typedef Mtree<
@@ -28,14 +36,14 @@ int main()
 	MTree;
 
 	MTree arbol(2, 3);
-	Data d2 = { 9,8,7,6,5,4,3,2,1 };
-	Data d3 = { 2,2,3,4,4,6,8,8,9 };
-	Data d4 = { 1,1,1,4,9,6,9,8,9 };
-	Data d5 = { 5,8,7,6,5,4,3,2,1 };
-	Data d = { 1,2,3,4,5,6,7,8,9 };
-	Data d6 = { 4,2,3,4,4,6,8,1,1 };
-	Data d7 = { 3,2,1,4,2,6,9,7,9 };
-	Data d8 = { 8,1,1,4,3,6,9,8,9 };
+	Data d2 = {0,0};
+	Data d3 = {1,1 };
+	Data d4 = {2,1};
+	Data d5 = {3,5};
+	Data d = { 4,6 };
+	Data d6 = { 5,8 };
+	Data d7 = { 7,3};
+	Data d8 = { 9,3};
 
 	arbol.add(d2);
 	arbol.add(d3);
@@ -48,11 +56,25 @@ int main()
 
 	arbol.root->data;
 
-	for (int i = 0; i < arbol.root->data.size(); i++)
+	print_Data(arbol.root->data);
+	
+	Data q = {5,5};
+	arbol.rs(q, 3);
+
+	std::cout << "Resultados\n";
+	for (int i = 0; i < arbol.results.size(); i++)
 	{
-		std::cout << arbol.root->data[i] << std::endl;
+		std::cout << i <<": "<< std::endl;
+		print_Data(arbol.results[i]);
 	}
-	int x;
-	//std::cin >> x;
+
+	arbol.knn_query(q, 4);
+	std::cout << "\nKNN\n";
+	for (int i = 0; i < arbol.NN.size(); i++)
+	{
+		std::cout << i << ": distance =  " << arbol.NN[i].second << std::endl;
+		print_Data(arbol.NN[i].first);
+	}
+
     return 0;
 }
