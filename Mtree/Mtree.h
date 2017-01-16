@@ -3,7 +3,6 @@
 
 #include "ConcreteNodes.h"
 #include <queue>
-//#include <functional>
 
 // used as priority queue for KNN search
 namespace std {
@@ -22,6 +21,11 @@ namespace std {
 	};
 };
 
+/* Esta es la clase M-tree, usa templates para obtener:
+	@Data : Tipo de objeto a indexar
+	@DistanceFunction : Funcion de distancia metrica
+	@SplitFunction : Cuando ocurre un overflown en una hoja se llama a esta funcion para aplicar la politica correspondiente: promotion & partition*/
+
 template <
 	typename Data,
 	typename DistanceFunction = functions::euclidean_distance<Data>,
@@ -36,30 +40,32 @@ class Mtree
 
 	typedef std::vector<Data> result;
 	typedef std::vector<std::pair<Data, double>> NNresult;
-	typedef std::pair<M_node<Data,DistanceFunction,SplitFunction>*, double> element;
-	typedef bool(*greater_comp)(const element&, const element&);
+
+	// first double for minDistance, second double for distance To parent
+	typedef std::pair<M_node<Data,DistanceFunction,SplitFunction>*, std::pair<double,double> > element;
 
 	struct greater
 	{
 		bool operator()(const element& e1, const element &e2)
 		{
-			if (e1.second > e2.second)
+			if (e1.second.first > e2.second.first)
 				return true;
 			return false;
 		}
 	};
 
-	friend bool operator >(const std::pair<M_node<Data, DistanceFunction, SplitFunction>*,double> &n, double d)
+	friend bool operator >(const std::pair<M_node<Data, DistanceFunction, SplitFunction>*,std::pair<double,double>> &n, double d)
 	{
-		if (n.second > d)
+		if (n.second.first > d)
 			return true;
 		return false;
 	}
-	//typedef std::priority_queue<element, std::vector<element>,greater> pqueue;
+
 	typedef std::custom_priority_queue<element, greater> pqueue;
 
     //using distance_function_cached = functions::f_distance_cached<Data,DistanceFunction>;
 
+	// construye un M-tree con los parametros especificados o default
 	explicit Mtree(size_t min_capacity = DEFAULT_MIN_NODE_CAPACITY, size_t max_capacity = -1, const DistanceFunction& distance_func = DistanceFunction{},
 		const SplitFunction& split_function = SplitFunction{})
     :minNodeCapacity(min_capacity),maxNodeCapacity(max_capacity),distance_function(distance_func), split_function(split_function), root(NULL)
@@ -85,7 +91,12 @@ class Mtree
 
     Mtree& operator=(const Mtree&) = delete;
 
-    // add a new object data to index
+    /* Agrega un nuevo objeto del tipo @Data al arbol para ser indexado
+	   Agrega los nuevos objetos a la raiz y asi recursivamente hasta llegar a las hojas
+	   si la hoja donde es agregado se encuentra en overflown, lanzara una exepcion, si la excepcion llega hasta este punto
+	   se creara una nueva raiz con los objetos dados por el nodo de remplazo temporal.
+	*/
+
     void add(const Data& data)
     {
         if(root == NULL)
@@ -114,6 +125,11 @@ class Mtree
         }
     }
 
+
+	/*
+		Remueve el objeto indexado con el valor de @data, Todavia en desarrollo...
+	*/
+
     bool remove(const Data& data)
     {
         if(root == nullptr)
@@ -134,6 +150,7 @@ class Mtree
 
     // queries
 
+	// Verifica si la raiz del arbol esta cumpliendo las semanticas del M-tree
     void check() const
     {
         if(root != NULL)
@@ -142,6 +159,8 @@ class Mtree
         }
     }
 
+	// Realiza una consulta "Range Search" sobre los objetos del arbol dado un objeto Query @Q y un radio @rQ
+	// Los objetos que cumplan los criterios, puedes ser vistos en el vector 'results' al finalizar la consulta
 	void rs(Data &Q, double rQ)
 	{
 		results.clear();
@@ -155,6 +174,7 @@ class Mtree
 		std::cout << "Number of results: " << results.size() << std::endl;
 	}
 
+	// Funcion auxiliar que realiza el algoritmo RS del paper
 	void rs_aux(M_node<Data, DistanceFunction, SplitFunction>* n, Data &Op, Data &Q, double dp, double rQ)
 	{
 		LeafNode<Data, DistanceFunction, SplitFunction>* N = dynamic_cast<LeafNode<Data, DistanceFunction, SplitFunction>*>(n);
@@ -196,23 +216,31 @@ class Mtree
 		}
 	}
 
+	// Realiza una consulta "K nearest neightbors" sobre el M-tree, dado un objeto @Q y un numero @k
+	// Los objetos obtenidos son colocados en 'KNNresults' y pueden ser visibles
 	void knn_query(Data &Q, int k)
 	{
 		knn_search(root, Q, k);
 	}
 
-	M_node<Data, DistanceFunction, SplitFunction>* chooseNode(pqueue &priority_Q)
+	// Funcion axuliar escoge el siguiente nodo mas cercano a el objeto Query
+	M_node<Data, DistanceFunction, SplitFunction>* chooseNode(pqueue &priority_Q, double &distance_parent)
 	{
-		auto n = priority_Q.top();
+		auto n = priority_Q.top();   // CHOOSE THE CLOSEST TO QUERY OBJECT
+		distance_parent = n.second.second;
 		priority_Q.pop();
 		return n.first;
 	}
 
+	// Ejecuta iterativamente el algoritmo principal para encontrar los knn-neightbors
 	void knn_search(M_node<Data, DistanceFunction, SplitFunction>* n_root, Data &queryObj, int k)
 	{
 		minimunQueue = pqueue();
 
-		element r = { n_root, 0 };	// maybe infinity
+		double distance = distance_function(queryObj, root->data);
+		double minDistance = std::max(distance - root->radius, 0.0);
+
+		element r = { n_root, {minDistance,distance} };	// maybe infinity
 		minimunQueue.push(r);
 
 		NN.resize(k);
@@ -222,15 +250,14 @@ class Mtree
 			NN[i].second = std::numeric_limits<double>::infinity();
 		}
 
-		double distance = distance_function(queryObj, root->data);		// distance of Op(parent of current node) to Q
 		while (!minimunQueue.empty())
 		{
-			M_node<Data, DistanceFunction, SplitFunction>* nextNode = chooseNode(minimunQueue);		// root first
-			//nextNode->distanceToParent;
-			distance = knn_NodeSearch(nextNode, distance,queryObj, k);
+			M_node<Data, DistanceFunction, SplitFunction>* nextNode = chooseNode(minimunQueue, distance);		// root first
+			knn_NodeSearch(nextNode, distance,queryObj, k);
 		}
 	}
 
+	// Algoritmo principal de knn, puede ser encontrado en el paper, similar a rs.
 	double knn_NodeSearch(M_node<Data, DistanceFunction, SplitFunction>* n, double dp, Data &Q, int k)
 	{
 		double d;
@@ -247,7 +274,8 @@ class Mtree
 					double childMinDistance = std::max(d - (i->second)->radius, 0.0);
 					if (childMinDistance <= dk)	//dmin(T(Or))<=dk
 					{
-						element toInsert = std::make_pair(dynamic_cast<M_node<Data,DistanceFunction,SplitFunction>*>(i->second),childMinDistance);
+						// store distance to parent with pointer in priority queue
+						element toInsert = std::make_pair(dynamic_cast<M_node<Data,DistanceFunction,SplitFunction>*>(i->second),std::make_pair(childMinDistance,d));
 						minimunQueue.push(toInsert);	// add [ptr(T(Or)),dmin(T(Or))] to PR
 						double dmax = d + (i->second)->radius;
 						if (dmax < dk)
@@ -266,7 +294,7 @@ class Mtree
 			for (auto i = N->children.begin(); i != N->children.end(); ++i)
 			{
 				double dk = NN[k-1].second;
-				if(std::abs(dp - (i->second)->distanceToParent) <= dk)
+				if(std::abs(dp - (i->second)->distanceToParent) <= dk /*+ (i->second)->radius*/)
 				{
 					// distance between entry and query object
 					d = distance_function(i->first, Q);
@@ -284,20 +312,33 @@ class Mtree
 		return d;
 	}
 
+	// funcion auxiliar permite actualizar la lista de candidatos obtenidos durante la ejecucion.
 	double NN_update(std::pair<Data,double> &d, int k)
 	{
 		if (NN.size() > k)	// this should never happen
 			std::cerr << "Result vector size violated" << std::endl;
-		NN.push_back(d);
-		std::sort(NN.begin(), NN.end(), [](std::pair<Data, double> &d1, std::pair<Data, double> &d2)
-		{
-			if(d1.second < d2.second)
+		NNresult::iterator et = NN.begin();
+		et = std::find_if(NN.begin(), NN.end(), [d](const std::pair<Data, double> &i) {
+			if (i.second == d.second)
 				return true;
 			return false;
 		});
+		if (et == NN.end())
+		{
+			NN.push_back(d);
+			std::sort(NN.begin(), NN.end(), [](std::pair<Data, double> &d1, std::pair<Data, double> &d2)
+			{
+				if (d1.second < d2.second)
+					return true;
+				return false;
+			});
 
-		if (NN.size() == k + 1)	// this should be the only case when new element is inserted
-			NN.pop_back();
+			if (NN.size() == k + 1)	// this should be the only case when new element is inserted
+				NN.pop_back();
+		}
+		else {
+			et->first = d.first;
+		}
 		return NN[k-1].second;
 	}
 

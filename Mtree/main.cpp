@@ -36,14 +36,16 @@ int main()
 	MTree;
 
 	MTree arbol(2, 3);
-	Data d2 = {0,0};
-	Data d3 = {1,1 };
-	Data d4 = {2,1};
-	Data d5 = {3,5};
-	Data d = { 4,6 };
-	Data d6 = { 5,8 };
-	Data d7 = { 7,3};
-	Data d8 = { 9,3};
+	Data d2 = {2,1,1};
+	Data d3 = {1,1,1};
+	Data d4 = {6,6,2};
+	Data d5 = {5,5,3};
+	Data d = { 4,3,2 };
+	Data d9 = { 4,3,5 };
+	Data d6 = { 5,5,5 };
+	Data d7 = { 7,3,1};
+	Data d8 = { 1,3,3};
+	Data d10 = { 2 ,2 ,1 };
 
 	arbol.add(d2);
 	arbol.add(d3);
@@ -53,12 +55,14 @@ int main()
 	arbol.add(d7);
 	arbol.add(d8);
 	arbol.add(d);
+	arbol.add(d9);
+	arbol.add(d10);
 
 	arbol.root->data;
 
 	print_Data(arbol.root->data);
 	
-	Data q = {5,5};
+	Data q = {3,3,3};
 	arbol.rs(q, 3);
 
 	std::cout << "Resultados\n";
